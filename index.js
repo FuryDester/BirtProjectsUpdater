@@ -61,7 +61,7 @@ getFiles("C:\\Users\\-\\Downloads\\Telegram Desktop\\test").forEach(file => {
               </list-property>\n`);
       }
 
-      fs.writeFileSync(file + "_modified", fileData);
+      fs.writeFileSync(file.replace(".", "_modified."), fileData);
     }
   }
 })
