@@ -1,5 +1,8 @@
 const fs = require("fs");
 
+// Path to scripts
+const g_Path = "C:\\Users\\-\\Downloads\\Telegram Desktop\\test";
+
 function regexIndexOf(string, regex, startpos) {
     var indexOf = string.substring(startpos || 0).search(regex);
     return (indexOf >= 0) ? (indexOf + (startpos || 0)) : indexOf;
@@ -19,12 +22,12 @@ function getFiles(dir, files_) {
     return files_;
 }
 
-getFiles("C:\\Users\\-\\Downloads\\Telegram Desktop\\test").forEach(file => {
+getFiles(g_Path).forEach(file => {
   if(file.match(/.rptdesign$/)) {
     console.log(`File ${file} is our project!`);
     let fileData = fs.readFileSync(file, "utf8");
 
-    if(fileData.indexOf("<property name=\"createdBy\">Eclipse BIRT Designer Version 4.9.0.v201905231911</property>") != -1 && fileData.indexOf("<list-property name=\"privateDriverProperties\">") != -1) {
+    if(fileData.indexOf("<property name=\"createdBy\">Eclipse BIRT Designer Version 4.9.0.v201905231911</property>") != -1 || fileData.indexOf("<list-property name=\"privateDriverProperties\">") != -1) {
       console.log(`File ${file} already was modified!`);
     }
     else {
@@ -33,13 +36,16 @@ getFiles("C:\\Users\\-\\Downloads\\Telegram Desktop\\test").forEach(file => {
       let lastIndex = 0;
       while(regexIndexOf(fileData, "<oda-data-source extensionID=\"org.eclipse.birt.data.oda.mongodb\" name=\".{1,}\" id=\".{0,}\">", lastIndex) != -1) {
         let index = regexIndexOf(fileData, "<oda-data-source extensionID=\"org.eclipse.birt.data.oda.mongodb\" name=\".{1,}\" id=\".{0,}\">", lastIndex);
-        if(lastIndex == index + 5) {
+        if(lastIndex == index + 1) {
           console.log('Error during editing source externsion! Breaking...');
           break;
         }
+
         console.log(`Found source externsion at ${index}`);
-        lastIndex = index + 5;
+        lastIndex = index + 1;
         let matchInfo = fileData.substr(index).match(/<oda-data-source extensionID="org.eclipse.birt.data.oda.mongodb" name=".{1,}" id=".{0,}">/);
+
+        //Adding data source list-property, which came in v4.9
         fileData = fileData.replace(matchInfo[0], `${matchInfo[0]}
               <list-property name="privateDriverProperties">
                   <ex-property>
@@ -61,7 +67,7 @@ getFiles("C:\\Users\\-\\Downloads\\Telegram Desktop\\test").forEach(file => {
               </list-property>\n`);
       }
 
-      fs.writeFileSync(file.replace(".", "_modified."), fileData);
+      fs.writeFileSync(file.replace(file.substr(0, file.lastIndexOf(".") + 1), file.substr(0, file.lastIndexOf(".")) + "_modified."), fileData);
     }
   }
 })
